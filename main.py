@@ -89,14 +89,11 @@ def calculator(xvector):
     # Jeśli te metryki są równe N, nie ma wtedy wpływu
     no_impact_metrics = ['VC', 'VI', 'VA', 'SC', 'SI', 'SA']
     if all(xvector.get(metric) == "N" for metric in no_impact_metrics):
-        print(0)
         return 0.0
 
     eq = equvalentClasses(xvector) # Obliczone wartośći równoważnych klas jako jeden string
-    print(f"obliczona wartość równoważnych klas {eq}")
 
     value = table(eq) # Score wektora
-    print(f"score wektora {value}")
 
     # Rozdzielenie wszystkich wartośći EQ na zmienne i zmiana na int
     eq1, eq2, eq3, eq4, eq5, eq6 = [int(c) for c in eq]
@@ -119,7 +116,7 @@ def calculator(xvector):
     # 00 --> 01
     # 00 --> 10
         eq3eq6_next_lower_macro_left = f"{eq1}{eq2}{eq3}{eq4}{eq5}{eq6 + 1}"
-        eq3eq6_next_lower_macro_right = f"{eq1}{eq2}{eq3 + 1}{eq4}{eq5}${eq6}"
+        eq3eq6_next_lower_macro_right = f"{eq1}{eq2}{eq3 + 1}{eq4}{eq5}{eq6}"
     else:
     # 21 --> 32 (nie istnieje)
         eq3eq6_next_lower_macro = f"{eq1}{eq2}{eq3 + 1}{eq4}{eq5}{eq6 + 1}"
@@ -155,8 +152,6 @@ def calculator(xvector):
         getMaxSeverityVectorsForEq(eq, 5)
     ]
 
-    print(f'wybrane maksymalne {eq_maxes}')
-
     max_vectors = []
 
     # Zagnieżdżona pętla dla wszystkich kombinacji elementów z eq_maxes
@@ -168,10 +163,6 @@ def calculator(xvector):
                         # Łączenie ciągów w jeden
                         max_vectors.append(eq1_max + eq2_max + eq3_max + eq4_max + eq5_max)
 
-    print('max wektory czyli kombinacje')
-    for vector in max_vectors:
-        print(vector)
-
     # Szukanie największego wektora
     max_vector = None
     distances = {}
@@ -179,22 +170,15 @@ def calculator(xvector):
     for m_vector in max_vectors:
         distances = calculateSeverityDistances(m_vector, xvector)
 
-        print(f"dystans {distances}")
-
         if all(distance >= 0 for distance in distances.values()):
             max_vector = m_vector
             break
-
-    print(f"powinen byc cały słownik dystansów {distances}")
-    print(f"obliczony max wektor {max_vector}")
 
     # distances zawiera wartości z ostatniego sprawdzanego vectora
     current_severity_distance_eq1 = distances["AV"] + distances["PR"] + distances["UI"]
     current_severity_distance_eq2 = distances["AC"] + distances["AT"]
     current_severity_distance_eq3eq6 = distances["VC"] + distances["VI"] + distances["VA"] + distances["CR"] + distances["IR"] + distances["AR"]
     current_severity_distance_eq4 = distances["SC"] + distances["SI"] + distances["SA"]
-
-    print(f"obliczone dystanse {current_severity_distance_eq1}, {current_severity_distance_eq2},{current_severity_distance_eq3eq6}, {current_severity_distance_eq4}")
 
     if score_eq1_next_lower_macro is not None:
         available_distance_eq1 = float(value) - float(score_eq1_next_lower_macro)
@@ -221,21 +205,7 @@ def calculator(xvector):
     else:
         available_distance_eq5 = None
 
-    print(f"dostepne dystanse czyli od value odejmujemy {available_distance_eq1}, {available_distance_eq2}, {available_distance_eq3eq6}, available_distance_eq4, {available_distance_eq5}")
-
-    percent_to_next_eq1_severity = 0
-    percent_to_next_eq2_severity = 0
-    percent_to_next_eq3eq6_severity = 0
-    percent_to_next_eq4_severity = 0
-    percent_to_next_eq5_severity = 0
-
     n_existing_lower = 0
-
-    normalized_severity_eq1 = 0
-    normalized_severity_eq2 = 0
-    normalized_severity_eq3eq6 = 0
-    normalized_severity_eq4 = 0
-    normalized_severity_eq5 = 0
 
     STEP = 0.1
 
@@ -251,7 +221,6 @@ def calculator(xvector):
         percent_to_next_eq1_severity = current_severity_distance_eq1 / maxSeverity_eq1
         normalized_severity_eq1 = available_distance_eq1 * percent_to_next_eq1_severity
     else:
-        print("else1")
         normalized_severity_eq1 = 0
 
     # Obliczenia dla eq2
@@ -260,7 +229,6 @@ def calculator(xvector):
         percent_to_next_eq2_severity = current_severity_distance_eq2 / maxSeverity_eq2
         normalized_severity_eq2 = available_distance_eq2 * percent_to_next_eq2_severity
     else:
-        print("else2")
         normalized_severity_eq2 = 0
 
     # Obliczenia dla eq3eq6
@@ -269,7 +237,6 @@ def calculator(xvector):
         percent_to_next_eq3eq6_severity = current_severity_distance_eq3eq6 / maxSeverity_eq3eq6
         normalized_severity_eq3eq6 = available_distance_eq3eq6 * percent_to_next_eq3eq6_severity
     else:
-        print("else3")
         normalized_severity_eq3eq6 = 0
 
     # Obliczenia dla eq4
@@ -278,7 +245,6 @@ def calculator(xvector):
         percent_to_next_eq4_severity = current_severity_distance_eq4 / maxSeverity_eq4
         normalized_severity_eq4 = available_distance_eq4 * percent_to_next_eq4_severity
     else:
-        print("else4")
         normalized_severity_eq4 = 0
 
     # Obliczenia dla eq5 (czyli zawsze 0)
@@ -287,10 +253,7 @@ def calculator(xvector):
         percent_to_next_eq5_severity = 0
         normalized_severity_eq5 = available_distance_eq5 * percent_to_next_eq5_severity
     else:
-        print("else5")
         normalized_severity_eq5 = 0
-
-    print(normalized_severity_eq1,normalized_severity_eq2, normalized_severity_eq3eq6, normalized_severity_eq4, normalized_severity_eq5)
 
     if n_existing_lower == 0:
         mean_distance = 0
@@ -306,6 +269,17 @@ def calculator(xvector):
     final_score = round(final_score, 1)
 
     print(final_score)
+
+    if final_score == 0:
+        print("None")
+    elif final_score < 4.0:
+        print("Low")
+    elif final_score < 7.0:
+        print("Medium")
+    elif final_score < 9.0:
+        print("High")
+    else:
+        print("Critical")
 
 
 # Funckja do obliczania rónoważnych klas
@@ -354,8 +328,6 @@ def equvalentClasses(vector):
 
     EQ6_value = EQ6(CR, VC, IR, VI, AR, VA)
 
-    print(EQ1_value, EQ2_value, EQ3_value, EQ4_value, EQ5_value, EQ6_value)
-
     value = EQ1_value + EQ2_value + EQ3_value + EQ4_value + EQ5_value + EQ6_value
 
     return value
@@ -367,6 +339,8 @@ def EQ1(AV, PR, UI):
     elif (AV == "N" or PR == "N" or UI == "N") and not (AV == "N" and PR == "N" and UI == "N") and AV != "P":
         return "1"
     elif (AV == "P") and not (AV == "N" or PR == "N" or UI == "N"):
+        return "2"
+    else:
         return "2"
 
 
@@ -478,16 +452,10 @@ def calculateSeverityDistances(max_vector, vector):
 
     distances = {}
 
-    print(f'vektor w funkcji {vector}')
-
-    print('metryki')
     for metric in METRIC_LEVELS:
-        print(f" metryka {metric}")
         effective_metric_value = vector[metric]
-        print(f" wartość metryki {effective_metric_value}")
 
         extracted_metric_value = extractValueMetric(metric, max_vector)
-        print(f"wartość z max wektora {extracted_metric_value}")
 
         distances[metric] = METRIC_LEVELS[metric][effective_metric_value] - METRIC_LEVELS[metric][extracted_metric_value]
 
