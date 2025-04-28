@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>CVSS Kalkulator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to right, #e0f7fa, #e1f5fe);
+        }
+        .card {
+            border-left: 5px solid #0d6efd;
+            background-color: #ffffffee;
+        }
+        h1 {
+            color: #0d6efd;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #0d47a1;
+        }
+        #result {
+            color: #0d6efd;
+        }
+        button {
+            background: linear-gradient(to right, #007bff, #0056b3);
+            border: none;
+        }
+        button:hover {
+            background: linear-gradient(to right, #0056b3, #003974);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">Kalkulator CVSS</h1>
+                <form id="cvssForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">AV (Attack Vector)</label>
+                            <select name="AV" class="form-select">
+                                <option value="N">Network (N)</option>
+                                <option value="A">Adjacent (A)</option>
+                                <option value="L">Local (L)</option>
+                                <option value="P">Physical (P)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">PR (Privileges Required)</label>
+                            <select name="PR" class="form-select">
+                                <option value="N">None (N)</option>
+                                <option value="L">Low (L)</option>
+                                <option value="H">High (H)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">UI (User Interaction)</label>
+                            <select name="UI" class="form-select">
+                                <option value="N">None (N)</option>
+                                <option value="P">Passive (P)</option>
+                                <option value="A">Active (A)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">AC (Attack Complexity)</label>
+                            <select name="AC" class="form-select">
+                                <option value="L">Low (L)</option>
+                                <option value="H">High (H)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">AT (Attack Requirements)</label>
+                            <select name="AT" class="form-select">
+                                <option value="N">None (N)</option>
+                                <option value="P">Present (P)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">VC (Confidentiality Impact)</label>
+                            <select name="VC" class="form-select">
+                                <option value="H">High (H)</option>
+                                <option value="L">Low (L)</option>
+                                <option value="N">None (N)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">VI (Integrity Impact)</label>
+                            <select name="VI" class="form-select">
+                                <option value="H">High (H)</option>
+                                <option value="L">Low (L)</option>
+                                <option value="N">None (N)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">VA (Availability Impact)</label>
+                            <select name="VA" class="form-select">
+                                <option value="H">High (H)</option>
+                                <option value="L">Low (L)</option>
+                                <option value="N">None (N)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">SC (Confidentiality Scope)</label>
+                            <select name="SC" class="form-select">
+                                <option value="H">High (H)</option>
+                                <option value="L">Low (L)</option>
+                                <option value="N">None (N)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">SI (Integrity Scope)</label>
+                            <select name="SI" class="form-select">
+                                <option value="S">Severe (S)</option>
+                                <option value="H">High (H)</option>
+                                <option value="L">Low (L)</option>
+                                <option value="N">None (N)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">SA (Availability Scope)</label>
+                            <select name="SA" class="form-select">
+                                <option value="S">Severe (S)</option>
+                                <option value="H">High (H)</option>
+                                <option value="L">Low (L)</option>
+                                <option value="N">None (N)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">CR (Confidentiality Requirement)</label>
+                            <select name="CR" class="form-select">
+                                <option value="H">High (H)</option>
+                                <option value="M">Medium (M)</option>
+                                <option value="L">Low (L)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">IR (Integrity Requirement)</label>
+                            <select name="IR" class="form-select">
+                                <option value="H">High (H)</option>
+                                <option value="M">Medium (M)</option>
+                                <option value="L">Low (L)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">AR (Availability Requirement)</label>
+                            <select name="AR" class="form-select">
+                                <option value="H">High (H)</option>
+                                <option value="M">Medium (M)</option>
+                                <option value="L">Low (L)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">E (Exploitability)</label>
+                            <select name="E" class="form-select">
+                                <option value="U">Unproven (U)</option>
+                                <option value="P">Proof-of-Concept (P)</option>
+                                <option value="A">Available (A)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="button" id="showVectorBtn" class="btn btn-primary me-2">Pokaż wektor</button>
+                        <button type="submit" class="btn btn-primary">Wyślij i oblicz wynik</button>
+                    </div>
+                </form>
+                <div id="result" class="mt-4 text-center fw-bold"></div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
