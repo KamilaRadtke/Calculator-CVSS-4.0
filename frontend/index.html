@@ -37,6 +37,7 @@
             <div class="card-body">
                 <h1 class="card-title text-center mb-4">Kalkulator CVSS</h1>
                 <form id="cvssForm">
+                <h5 class="text-center mb-3 text-primary">Base Metrics</h5>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">AV (Attack Vector)</label>
@@ -160,6 +161,112 @@
                             </select>
                         </div>
                     </div>
+                <hr class="mt-5 mb-4">
+                <h5 class="text-center mb-3 text-primary">Modified Metrics</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">MAV (Modified Attack Vector)</label>
+                            <select name="MAV" class="form-select">
+                                <option value="">—</option>
+                                <option value="N">Network</option>
+                                <option value="A">Adjacent</option>
+                                <option value="L">Local</option>
+                                <option value="P">Physical</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MPR (Modified Privileges Required)</label>
+                            <select name="MPR" class="form-select">
+                                <option value="">—</option>
+                                <option value="N">None</option>
+                                <option value="L">Low</option>
+                                <option value="H">High</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MUI (Modified User Interaction)</label>
+                            <select name="MUI" class="form-select">
+                                <option value="">—</option>
+                                <option value="N">None</option>
+                                <option value="P">Passive</option>
+                                <option value="A">Active</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MAC (Modified Attack Complexity)</label>
+                            <select name="MAC" class="form-select">
+                                <option value="">—</option>
+                                <option value="L">Low</option>
+                                <option value="H">High</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MAT (Modified Attack Requirements)</label>
+                            <select name="MAT" class="form-select">
+                                <option value="">—</option>
+                                <option value="N">None</option>
+                                <option value="P">Present</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MVC (Modified Confidentiality Impact)</label>
+                            <select name="MVC" class="form-select">
+                                <option value="">—</option>
+                                <option value="H">High</option>
+                                <option value="L">Low</option>
+                                <option value="N">None</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MVI (Modified Integrity Impact)</label>
+                            <select name="MVI" class="form-select">
+                                <option value="">—</option>
+                                <option value="H">High</option>
+                                <option value="L">Low</option>
+                                <option value="N">None</option>
+
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MVA (Modified Availability Impact)</label>
+                            <select name="MVA" class="form-select">
+                                <option value="">—</option>
+                                <option value="H">High</option>
+                                <option value="L">Low</option>
+                                <option value="N">None</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MSC (Modified Confidentiality Scope)</label>
+                            <select name="MSC" class="form-select">
+                                <option value="">—</option>
+                                <option value="H">High</option>
+                                <option value="L">Low</option>
+                                <option value="N">None</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MSI (Modified Integrity Scope)</label>
+                            <select name="MSI" class="form-select">
+                                <option value="">—</option>
+                                <option value="S">Severe</option>
+                                <option value="H">High</option>
+                                <option value="L">Low</option>
+                                <option value="N">None</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MSA (Modified Availability Scope)</label>
+                            <select name="MSA" class="form-select">
+                                <option value="">—</option>
+                                <option value="S">Severe</option>
+                                <option value="H">High</option>
+                                <option value="L">Low</option>
+                                <option value="N">None</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="text-center mt-4">
                         <button type="button" id="showVectorBtn" class="btn btn-primary me-2">Pokaż wektor</button>
                         <button type="submit" class="btn btn-primary">Wyślij i oblicz wynik</button>

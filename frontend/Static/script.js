@@ -9,7 +9,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const vectorParts = [];
 
         for (const [key, value] of formData.entries()) {
-            vectorParts.push(`${key}:${value}`);
+            if (value !== "") {
+                vectorParts.push(`${key}:${value}`);
+            }
         }
 
         return vectorParts.join('/');
