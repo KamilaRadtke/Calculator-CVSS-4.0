@@ -14,6 +14,7 @@ def VectorInput():
         key, value = part.split(':')
         vector[key] = value
 
+    print(vector)
     fullVector(vector) # Przekazanie podzielonego wektora
 
 # Funkcja uzupełniająca metryki
@@ -81,6 +82,7 @@ def fullVector(vector):
         if modificated_metric in XVector and not XVector[modificated_metric] == "X":
             XVector[key] = XVector[modificated_metric]
 
+    print(XVector)
     calculator(XVector) # Przekazanie gotowego wektora do funkcji obliczającej
 
 

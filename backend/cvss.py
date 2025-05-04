@@ -1,20 +1,31 @@
 # Funkcja, która przyjmuje wektor
 def VectorInput(cvss_input):
     # Przyjmowanie ciągu znaków od użytkownika
-    #cvss_input = input("Podaj CVSS: ")
 
-    # Tworzymy słownik, w którym klucze
+    # Konwersja wektora CVSSv4 na słownik
+    vector = parse_cvss_vector(cvss_input)
+
+    return fullVector(vector) # Przekazanie podzielonego wektora
+
+
+def parse_cvss_vector(cvss_string):
     vector = {}
 
+    # Usuwamy prefiks "CVSS:4.0/" jeśli istnieje
+    if cvss_string.startswith("CVSS:4.0/"):
+        cvss_string = cvss_string[9:]
+
     # Dzielimy ciąg na części według '/'
-    parts = cvss_input.split('/')
+    parts = cvss_string.split('/')
 
     # Rozdzielamy każdą część na klucz i wartość
     for part in parts:
-        key, value = part.split(':')
-        vector[key] = value
+        if ":" in part:
+            key, value = part.split(':', 1)  # Ograniczamy podział do pierwszego wystąpienia ":"
+            vector[key] = value
 
-    return fullVector(vector) # Przekazanie podzielonego wektora
+    return vector
+
 
 # Funkcja uzupełniająca metryki
 def fullVector(vector):
@@ -76,49 +87,96 @@ def fullVector(vector):
     if XVector["AR"] == "X":
         XVector["AR"] = "H"
 
-    for key, value in XVector.items():
-        modificated_metric = "M" + str(key)
-        if modificated_metric in XVector and not XVector[modificated_metric] == "X":
-            XVector[key] = XVector[modificated_metric]
+    if XVector["AV"] == "X":
+        XVector["AV"] = "N"  # Network
+
+    if XVector["AC"] == "X":
+        XVector["AC"] = "L"  # Low
+
+    if XVector["AT"] == "X":
+        XVector["AT"] = "N"  # None
+
+    if XVector["PR"] == "X":
+        XVector["PR"] = "N"  # None
+
+    if XVector["UI"] == "X":
+        XVector["UI"] = "N"  # None
+
+    # Uzupełnienie metryk wpływu
+    if XVector["VC"] == "X":
+        XVector["VC"] = "N"  # None
+
+    if XVector["VI"] == "X":
+        XVector["VI"] = "N"  # None
+
+    if XVector["VA"] == "X":
+        XVector["VA"] = "N"  # None
+
+    # Uzupełnienie metryk wpływu następczego
+    if XVector["SC"] == "X":
+        XVector["SC"] = "N"  # None
+
+    if XVector["SI"] == "X":
+        XVector["SI"] = "N"  # None
+
+    if XVector["SA"] == "X":
+        XVector["SA"] = "N"  # None
+
+    # zastosowanie zmodyfikowanych metryk
+    for key in ["AV", "AC", "AT", "PR", "UI", "VC", "VI", "VA", "SC", "SI", "SA", "S"]:
+        modified_key = "M" + key
+        if modified_key in XVector and XVector[modified_key] != "X":
+            XVector[key] = XVector[modified_key]
 
     return calculator(XVector) # Przekazanie gotowego wektora do funkcji obliczającej
 
 
 # Funkcja obliczająca wartość wektora
 def calculator(xvector):
-    # Jeśli te metryki są równe N, nie ma wtedy wpływu
+    # Jeśli wszystkie metryki wpływu są równe N, nie ma wtedy wpływu
     no_impact_metrics = ['VC', 'VI', 'VA', 'SC', 'SI', 'SA']
     if all(xvector.get(metric) == "N" for metric in no_impact_metrics):
+        print("Wszystkie metryki wpływu są równe N - brak wpływu")
+        print("Wynik CVSS: 0.0")
+        print("Poziom zagrożenia: None")
         return 0.0
 
-    eq = equvalentClasses(xvector) # Obliczone wartośći równoważnych klas jako jeden string
+    # Obliczenie równoważnych klas dla CVSSv4
+    eq = equvalentClasses(xvector)
+    print(f"Równoważne klasy (EQ): {eq}")
 
-    value = table(eq) # Score wektora
+    # Pobranie bazowego wyniku z tabeli
+    base_score = table(eq)
+    print(f"Bazowy wynik z tabeli: {base_score}")
 
-    # Rozdzielenie wszystkich wartośći EQ na zmienne i zmiana na int
+    if base_score is None:
+        print("Nie znaleziono wartości w tabeli dla tego wektora")
+        return None
+
+    # Rozdzielenie wszystkich wartości EQ na zmienne i zmiana na int
     eq1, eq2, eq3, eq4, eq5, eq6 = [int(c) for c in eq]
 
-    # Obliczanie kolejego niższewgo makro
+    # Obliczanie kolejnego niższego makro
     eq1_next_lower_macro = f"{eq1 + 1}{eq2}{eq3}{eq4}{eq5}{eq6}"
     eq2_next_lower_macro = f"{eq1}{eq2 + 1}{eq3}{eq4}{eq5}{eq6}"
 
-    # eq3 i eq6 są połączone
+    # eq3 i eq6 są połączone - zgodnie z CVSSv4
     if eq3 == 1 and eq6 == 1:
-    # 11 --> 21
+        # 11 --> 21
         eq3eq6_next_lower_macro = f"{eq1}{eq2}{eq3 + 1}{eq4}{eq5}{eq6}"
     elif eq3 == 0 and eq6 == 1:
-    # 01 --> 11
+        # 01 --> 11
         eq3eq6_next_lower_macro = f"{eq1}{eq2}{eq3 + 1}{eq4}{eq5}{eq6}"
     elif eq3 == 1 and eq6 == 0:
-    # 10 --> 11
+        # 10 --> 11
         eq3eq6_next_lower_macro = f"{eq1}{eq2}{eq3}{eq4}{eq5}{eq6 + 1}"
     elif eq3 == 0 and eq6 == 0:
-    # 00 --> 01
-    # 00 --> 10
+        # 00 --> 01 lub 00 --> 10
         eq3eq6_next_lower_macro_left = f"{eq1}{eq2}{eq3}{eq4}{eq5}{eq6 + 1}"
         eq3eq6_next_lower_macro_right = f"{eq1}{eq2}{eq3 + 1}{eq4}{eq5}{eq6}"
+        has_dual_path = True
     else:
-    # 21 --> 32 (nie istnieje)
+        # 21 --> (nie istnieje w CVSSv4)
         eq3eq6_next_lower_macro = f"{eq1}{eq2}{eq3 + 1}{eq4}{eq5}{eq6 + 1}"
 
     eq4_next_lower_macro = f"{eq1}{eq2}{eq3}{eq4 + 1}{eq5}{eq6}"
@@ -128,29 +186,54 @@ def calculator(xvector):
     score_eq1_next_lower_macro = table(eq1_next_lower_macro)
     score_eq2_next_lower_macro = table(eq2_next_lower_macro)
 
+    has_dual_path = False
     if eq3 == 0 and eq6 == 0:
+        has_dual_path = True
         score_eq3eq6_next_lower_macro_left = table(eq3eq6_next_lower_macro_left)
         score_eq3eq6_next_lower_macro_right = table(eq3eq6_next_lower_macro_right)
 
-        score_eq3eq6_next_lower_macro = max(score_eq3eq6_next_lower_macro_left, score_eq3eq6_next_lower_macro_right);
-
+        # Wybieramy większą wartość zgodnie z CVSSv4
+        if score_eq3eq6_next_lower_macro_left is not None and score_eq3eq6_next_lower_macro_right is not None:
+            score_eq3eq6_next_lower_macro = max(score_eq3eq6_next_lower_macro_left, score_eq3eq6_next_lower_macro_right)
+        elif score_eq3eq6_next_lower_macro_left is not None:
+            score_eq3eq6_next_lower_macro = score_eq3eq6_next_lower_macro_left
+        elif score_eq3eq6_next_lower_macro_right is not None:
+            score_eq3eq6_next_lower_macro = score_eq3eq6_next_lower_macro_right
+        else:
+            score_eq3eq6_next_lower_macro = None
     else:
         score_eq3eq6_next_lower_macro = table(eq3eq6_next_lower_macro)
 
     score_eq4_next_lower_macro = table(eq4_next_lower_macro)
     score_eq5_next_lower_macro = table(eq5_next_lower_macro)
 
-    # Zmiana eq6 na str
+    # Debug info
+    print(f"EQ1 next lower: {eq1_next_lower_macro} -> {score_eq1_next_lower_macro}")
+    print(f"EQ2 next lower: {eq2_next_lower_macro} -> {score_eq2_next_lower_macro}")
+    if has_dual_path:
+        print(f"EQ3/EQ6 next lower path 1: {eq3eq6_next_lower_macro_left} -> {score_eq3eq6_next_lower_macro_left}")
+        print(f"EQ3/EQ6 next lower path 2: {eq3eq6_next_lower_macro_right} -> {score_eq3eq6_next_lower_macro_right}")
+    else:
+        print(f"EQ3/EQ6 next lower: {eq3eq6_next_lower_macro} -> {score_eq3eq6_next_lower_macro}")
+    print(f"EQ4 next lower: {eq4_next_lower_macro} -> {score_eq4_next_lower_macro}")
+    print(f"EQ5 next lower: {eq5_next_lower_macro} -> {score_eq5_next_lower_macro}")
+
+    # Zmiana eq6 na str dla dostępu do słownika
     eq6_str = str(eq6)
 
     # Lista wektorów o możliwie najwyższym poziomie ryzyka
-    eq_maxes = [
-        getMaxSeverityVectorsForEq(eq, 1),
-        getMaxSeverityVectorsForEq(eq, 2),
-        getMaxSeverityVectorsForEq(eq, 3)[eq6_str],
-        getMaxSeverityVectorsForEq(eq, 4),
-        getMaxSeverityVectorsForEq(eq, 5)
-    ]
+    try:
+        eq_maxes = [
+            getMaxSeverityVectorsForEq(eq, 1),
+            getMaxSeverityVectorsForEq(eq, 2),
+            getMaxSeverityVectorsForEq(eq, 3)[eq6_str],
+            getMaxSeverityVectorsForEq(eq, 4),
+            getMaxSeverityVectorsForEq(eq, 5)
+        ]
+    except KeyError as e:
+        print(f"Błąd w getMaxSeverityVectorsForEq: {e}")
+        print(f"Brakujący klucz w słowniku dla EQ3 lub eq6_str={eq6_str}")
+        return None
 
     max_vectors = []
 
@@ -167,58 +250,63 @@ def calculator(xvector):
     max_vector = None
     distances = {}
 
-    for m_vector in max_vectors:
-        distances = calculateSeverityDistances(m_vector, xvector)
+    print(f"Liczba analizowanych wektorów max: {len(max_vectors)}")
 
-        if all(distance >= 0 for distance in distances.values()):
-            max_vector = m_vector
-            break
+    for m_vector in max_vectors:
+        try:
+            distances = calculateSeverityDistances(m_vector, xvector)
+            if all(distance >= 0 for distance in distances.values()):
+                max_vector = m_vector
+                print(f"Znaleziono pasujący max_vector: {max_vector}")
+                break
+        except Exception as e:
+            print(f"Błąd podczas przetwarzania wektora {m_vector}: {e}")
+            continue
+
+    if max_vector is None:
+        print("Nie znaleziono pasującego wektora maksymalnego")
+        return None
 
     # distances zawiera wartości z ostatniego sprawdzanego vectora
-    current_severity_distance_eq1 = distances["AV"] + distances["PR"] + distances["UI"]
-    current_severity_distance_eq2 = distances["AC"] + distances["AT"]
-    current_severity_distance_eq3eq6 = distances["VC"] + distances["VI"] + distances["VA"] + distances["CR"] + distances["IR"] + distances["AR"]
-    current_severity_distance_eq4 = distances["SC"] + distances["SI"] + distances["SA"]
+    current_severity_distance_eq1 = distances.get("AV", 0) + distances.get("PR", 0) + distances.get("UI", 0)
+    current_severity_distance_eq2 = distances.get("AC", 0) + distances.get("AT", 0)
+    current_severity_distance_eq3eq6 = (
+            distances.get("VC", 0) + distances.get("VI", 0) + distances.get("VA", 0) +
+            distances.get("CR", 0) + distances.get("IR", 0) + distances.get("AR", 0)
+    )
+    current_severity_distance_eq4 = distances.get("SC", 0) + distances.get("SI", 0) + distances.get("SA", 0)
 
-    if score_eq1_next_lower_macro is not None:
-        available_distance_eq1 = float(value) - float(score_eq1_next_lower_macro)
-    else:
-        available_distance_eq1 = None
-
-    if score_eq2_next_lower_macro is not None:
-        available_distance_eq2 = float(value) - float(score_eq2_next_lower_macro)
-    else:
-        available_distance_eq2 = None
-
-    if score_eq3eq6_next_lower_macro is not None:
-        available_distance_eq3eq6 = float(value) - float(score_eq3eq6_next_lower_macro)
-    else:
-        available_distance_eq3eq6 = None
-
-    if score_eq4_next_lower_macro is not None:
-        available_distance_eq4 = float(value) - float(score_eq4_next_lower_macro)
-    else:
-        available_distance_eq4 = None
-
-    if score_eq5_next_lower_macro is not None:
-        available_distance_eq5 = float(value) - float(score_eq5_next_lower_macro)
-    else:
-        available_distance_eq5 = None
+    # Dostępne odległości między poziomami
+    available_distance_eq1 = float(base_score) - float(
+        score_eq1_next_lower_macro) if score_eq1_next_lower_macro is not None else None
+    available_distance_eq2 = float(base_score) - float(
+        score_eq2_next_lower_macro) if score_eq2_next_lower_macro is not None else None
+    available_distance_eq3eq6 = float(base_score) - float(
+        score_eq3eq6_next_lower_macro) if score_eq3eq6_next_lower_macro is not None else None
+    available_distance_eq4 = float(base_score) - float(
+        score_eq4_next_lower_macro) if score_eq4_next_lower_macro is not None else None
+    available_distance_eq5 = float(base_score) - float(
+        score_eq5_next_lower_macro) if score_eq5_next_lower_macro is not None else None
 
     n_existing_lower = 0
-
     STEP = 0.1
 
+    # Wartości maksymalnych odległości dla EQ - zgodne z CVSSv4
     maxSeverity_eq1 = maxSeverityDistances("eq1", eq1) * STEP
     maxSeverity_eq2 = maxSeverityDistances("eq2", eq2) * STEP
-    maxSeverity_eq3eq6 = maxSeverityDistances("eq3eq6", eq3)[eq6] * STEP
+    maxSeverity_eq3eq6 = maxSeverityDistances("eq3eq6", eq3)[eq6] * STEP if eq6 in maxSeverityDistances("eq3eq6",
+                                                                                                        eq3) else 0
     maxSeverity_eq4 = maxSeverityDistances("eq4", eq4) * STEP
 
+    print(f"Max severity EQ1: {maxSeverity_eq1}")
+    print(f"Max severity EQ2: {maxSeverity_eq2}")
+    print(f"Max severity EQ3/EQ6: {maxSeverity_eq3eq6}")
+    print(f"Max severity EQ4: {maxSeverity_eq4}")
 
     # Obliczenia dla eq1
-    if available_distance_eq1 is not None:  # Sprawdzanie, czy dostępny dystans jest liczbą
+    if available_distance_eq1 is not None:
         n_existing_lower += 1
-        percent_to_next_eq1_severity = current_severity_distance_eq1 / maxSeverity_eq1
+        percent_to_next_eq1_severity = current_severity_distance_eq1 / maxSeverity_eq1 if maxSeverity_eq1 > 0 else 0
         normalized_severity_eq1 = available_distance_eq1 * percent_to_next_eq1_severity
     else:
         normalized_severity_eq1 = 0
@@ -226,7 +314,7 @@ def calculator(xvector):
     # Obliczenia dla eq2
     if available_distance_eq2 is not None:
         n_existing_lower += 1
-        percent_to_next_eq2_severity = current_severity_distance_eq2 / maxSeverity_eq2
+        percent_to_next_eq2_severity = current_severity_distance_eq2 / maxSeverity_eq2 if maxSeverity_eq2 > 0 else 0
         normalized_severity_eq2 = available_distance_eq2 * percent_to_next_eq2_severity
     else:
         normalized_severity_eq2 = 0
@@ -234,7 +322,7 @@ def calculator(xvector):
     # Obliczenia dla eq3eq6
     if available_distance_eq3eq6 is not None:
         n_existing_lower += 1
-        percent_to_next_eq3eq6_severity = current_severity_distance_eq3eq6 / maxSeverity_eq3eq6
+        percent_to_next_eq3eq6_severity = current_severity_distance_eq3eq6 / maxSeverity_eq3eq6 if maxSeverity_eq3eq6 > 0 else 0
         normalized_severity_eq3eq6 = available_distance_eq3eq6 * percent_to_next_eq3eq6_severity
     else:
         normalized_severity_eq3eq6 = 0
@@ -242,12 +330,12 @@ def calculator(xvector):
     # Obliczenia dla eq4
     if available_distance_eq4 is not None:
         n_existing_lower += 1
-        percent_to_next_eq4_severity = current_severity_distance_eq4 / maxSeverity_eq4
+        percent_to_next_eq4_severity = current_severity_distance_eq4 / maxSeverity_eq4 if maxSeverity_eq4 > 0 else 0
         normalized_severity_eq4 = available_distance_eq4 * percent_to_next_eq4_severity
     else:
         normalized_severity_eq4 = 0
 
-    # Obliczenia dla eq5 (czyli zawsze 0)
+    # Obliczenia dla eq5 (w CVSSv4 zawsze 0)
     if available_distance_eq5 is not None:
         n_existing_lower += 1
         percent_to_next_eq5_severity = 0
@@ -255,84 +343,93 @@ def calculator(xvector):
     else:
         normalized_severity_eq5 = 0
 
+    print(f"Normalized EQ1: {normalized_severity_eq1}")
+    print(f"Normalized EQ2: {normalized_severity_eq2}")
+    print(f"Normalized EQ3/EQ6: {normalized_severity_eq3eq6}")
+    print(f"Normalized EQ4: {normalized_severity_eq4}")
+    print(f"Normalized EQ5: {normalized_severity_eq5}")
+
+    # Obliczenie średniej odległości
     if n_existing_lower == 0:
         mean_distance = 0
     else:
-        mean_distance = (normalized_severity_eq1 + normalized_severity_eq2 + normalized_severity_eq3eq6 + normalized_severity_eq4 + normalized_severity_eq5) / n_existing_lower
+        mean_distance = (
+                                normalized_severity_eq1 + normalized_severity_eq2 +
+                                normalized_severity_eq3eq6 + normalized_severity_eq4 +
+                                normalized_severity_eq5
+                        ) / n_existing_lower
 
-    # Obliczenie wyniku końcowego
-    final_score = value - mean_distance
+    # Obliczenie wyniku końcowego zgodnie z CVSSv4
+    final_score = base_score - mean_distance
 
     # Ograniczenie wyniku do zakresu 0-10
     final_score = max(0, min(10, final_score))
-
     final_score = round(final_score, 1)
 
     print(final_score)
-    score=''
 
     if final_score == 0:
         print("None")
-        score="None"
+        score = "None"
     elif final_score < 4.0:
         print("Low")
-        score="Low"
+        score = "Low"
     elif final_score < 7.0:
         print("Medium")
-        score="Medium"
+        score = "Medium"
     elif final_score < 9.0:
         print("High")
-        score="High"
+        score = "High"
     else:
         print("Critical")
-        score="Critical"
+        score = "Critical"
 
-    return final_score,score
+    return final_score, score
 
 
 # Funckja do obliczania rónoważnych klas
 def equvalentClasses(vector):
-    # EQ1
-    AV = vector['AV']
-    PR = vector['PR']
-    UI = vector['UI']
+    # EQ1 - dostęp
+    AV = vector.get('AV', 'X')
+    PR = vector.get('PR', 'X')
+    UI = vector.get('UI', 'X')
 
     EQ1_value = EQ1(AV, PR, UI)
 
-    # EQ2
-    AC = vector['AC']
-    AT = vector['AT']
+    # EQ2 - złożoność
+    AC = vector.get('AC', 'X')
+    AT = vector.get('AT', 'X')
 
     EQ2_value = EQ2(AC, AT)
 
-    # EQ3
-    VC = vector['VC']
-    VI = vector['VI']
-    VA = vector['VA']
+    # EQ3 - wpływ bezpośredni
+    VC = vector.get('VC', 'X')
+    VI = vector.get('VI', 'X')
+    VA = vector.get('VA', 'X')
 
     EQ3_value = EQ3(VC, VI, VA)
 
-    # EQ4
-    MSI = vector['MSI']
-    MSA = vector['MSA']
-    SI = vector['SI']
-    SC = vector['SC']
-    SA = vector['SA']
+    # EQ4 - wpływ następczy
+    MSI = vector.get('MSI', 'X')
+    MSA = vector.get('MSA', 'X')
+    SC = vector.get('SC', 'X')
+    SI = vector.get('SI', 'X')
+    SA = vector.get('SA', 'X')
 
     EQ4_value = EQ4(MSI, MSA, SC, SI, SA)
 
-    # EQ5
-    E = vector['E']
+    # EQ5 - dojrzałość exploita
+    E = vector.get('E', 'X')
 
     EQ5_value = EQ5(E)
 
-    #EQ6
-    CR = vector['CR']
-    IR = vector['IR']
-    AR = vector['AR']
-    VC = vector['VC']
-    VI = vector['VI']
-    VA = vector['VA']
+    # EQ6 - wymagania systemowe
+    CR = vector.get('CR', 'X')
+    IR = vector.get('IR', 'X')
+    AR = vector.get('AR', 'X')
+    VC = vector.get('VC', 'X')
+    VI = vector.get('VI', 'X')
+    VA = vector.get('VA', 'X')
 
     EQ6_value = EQ6(CR, VC, IR, VI, AR, VA)
 
@@ -342,13 +439,11 @@ def equvalentClasses(vector):
 
 
 def EQ1(AV, PR, UI):
-    if (AV == "N" and PR == "N" and UI == "N"):
+    if AV == "N" and PR == "N" and UI == "N":
         return "0"
     elif (AV == "N" or PR == "N" or UI == "N") and not (AV == "N" and PR == "N" and UI == "N") and AV != "P":
         return "1"
-    elif (AV == "P") and not (AV == "N" or PR == "N" or UI == "N"):
-        return "2"
-    else:
+    else:  # AV == "P" lub kombinacja innych wartości
         return "2"
 
 
@@ -360,18 +455,18 @@ def EQ2(AC, AT):
 
 
 def EQ3(VC, VI, VA):
-    if (VC == "H" and VI == "H"):
+    if VC == "H" and VI == "H":
         return "0"
-    if not (VC == "H" and VI == "H") and (VC == "H" or VI == "H" or VA == "H"):
+    elif not (VC == "H" and VI == "H") and (VC == "H" or VI == "H" or VA == "H"):
         return "1"
-    if not (VC == "H" or VI == "H" or VA == "H"):
+    else:  # Żaden wpływ nie jest H
         return "2"
 
 
 def EQ4(MSI, MSA, SC, SI, SA):
-    if (MSI == "S" and MSA == "S"):
+    if MSI == "S" or MSA == "S":
         return "0"
-    if not (MSI == "S" or MSA == "S") and (SC == "H" or SI == "H" or SA == "H"):
+    elif SC == "H" or SI == "H" or SA == "H":
         return "1"
     else:
         return "2"
